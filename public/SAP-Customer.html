@@ -450,9 +450,11 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
-        // Configuration
-        const API_BASE_URL = 'https://sap-project-nine.vercel.app'; // Replace with your Vercel URL
+        // Cloudinary Configuration
+        const CLOUDINARY_CLOUD_NAME = 'dtwvptox0';
+        const CLOUDINARY_UPLOAD_PRESET = 'sap_documents'; // Create this in Cloudinary Dashboard
         
         // DOM Elements
         const uploadForm = document.getElementById('uploadForm');
@@ -477,14 +479,14 @@
         // Upload form handler
         uploadForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            await uploadFile();
+            await uploadToCloudinary();
         });
         
         // Refresh button handler
-        refreshBtn.addEventListener('click', loadFiles);
+        refreshBtn.addEventListener('click', loadFilesFromCloudinary);
         
-        // Upload file function
-        async function uploadFile() {
+        // Upload file to Cloudinary
+        async function uploadToCloudinary() {
             const file = fileInput.files[0];
             if (!file) {
                 showStatus('Veuillez sélectionner un fichier', 'error');
@@ -493,30 +495,61 @@
             
             const formData = new FormData();
             formData.append('file', file);
+            formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+            formData.append('cloud_name', CLOUDINARY_CLOUD_NAME);
             
             try {
                 showStatus('Téléversement en cours...', 'loading');
                 
-                const response = await fetch(`${API_BASE_URL}/api/upload`, {
-                    method: 'POST',
-                    body: formData
-                });
+                const response = await axios.post(
+                    `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/upload`,
+                    formData,
+                    {
+                        headers: {
+                            'Content-Type': 'multipart/form-data'
+                        },
+                        onUploadProgress: (progressEvent) => {
+                            const percentCompleted = Math.round(
+                                (progressEvent.loaded * 100) / progressEvent.total
+                            );
+                            showStatus(`Téléversement: ${percentCompleted}%`, 'loading');
+                        }
+                    }
+                );
                 
-                if (!response.ok) throw new Error('Erreur lors du téléversement');
-                
-                const data = await response.json();
                 showStatus('Téléversement réussi!', 'success');
                 fileInput.value = '';
                 selectedFile.style.display = 'none';
-                await loadFiles();
+                
+                // Store file metadata in your database (optional)
+                await storeFileMetadata(response.data);
+                
+                // Refresh file list
+                await loadFilesFromCloudinary();
             } catch (error) {
                 showStatus(`Erreur: ${error.message}`, 'error');
-                console.error('Erreur:', error);
+                console.error('Erreur Cloudinary:', error);
             }
         }
         
-        // Load files function
-        async function loadFiles() {
+        // Store file metadata in your database (optional)
+        async function storeFileMetadata(fileData) {
+            try {
+                await axios.post('/api/store-file', {
+                    public_id: fileData.public_id,
+                    secure_url: fileData.secure_url,
+                    format: fileData.format,
+                    bytes: fileData.bytes,
+                    created_at: fileData.created_at,
+                    original_filename: fileData.original_filename
+                });
+            } catch (error) {
+                console.error('Error storing metadata:', error);
+            }
+        }
+        
+        // Load files from Cloudinary
+        async function loadFilesFromCloudinary() {
             fileList.innerHTML = `
                 <li class="empty-state">
                     <i class="fas fa-circle-notch fa-spin"></i>
@@ -525,16 +558,15 @@
             `;
             
             try {
-                const response = await fetch(`${API_BASE_URL}/api/files`);
-                if (!response.ok) throw new Error('Erreur de chargement');
+                // In a real app, you would fetch from your own API that gets Cloudinary files
+                const response = await axios.get('/api/files');
+                const files = response.data.files || [];
                 
-                const data = await response.json();
-                
-                if (data.files && data.files.length > 0) {
+                if (files.length > 0) {
                     fileList.innerHTML = '';
                     
-                    data.files.forEach(file => {
-                        const fileExt = file.name.split('.').pop().toLowerCase();
+                    files.forEach(file => {
+                        const fileExt = file.format || file.original_filename.split('.').pop().toLowerCase();
                         let iconClass = 'fas fa-file';
                         let iconBg = 'default-icon';
                         
@@ -564,18 +596,19 @@
                                     <i class="${iconClass}"></i>
                                 </div>
                                 <div class="file-details">
-                                    <div class="file-name" title="${file.name}">${file.name}</div>
+                                    <div class="file-name" title="${file.original_filename}">${file.original_filename}</div>
                                     <div class="file-meta">
-                                        <span><i class="fas fa-calendar-alt"></i> ${new Date().toLocaleDateString()}</span>
+                                        <span><i class="fas fa-calendar-alt"></i> ${new Date(file.created_at).toLocaleDateString()}</span>
                                         <span><i class="fas fa-file"></i> ${fileExt.toUpperCase()}</span>
+                                        <span><i class="fas fa-database"></i> ${formatFileSize(file.bytes)}</span>
                                     </div>
                                 </div>
                             </div>
                             <div class="file-actions">
-                                <a href="${file.url}" target="_blank" class="action-btn download-btn" title="Télécharger">
+                                <a href="${file.secure_url}" target="_blank" class="action-btn download-btn" title="Télécharger">
                                     <i class="fas fa-download"></i>
                                 </a>
-                                <button onclick="deleteFile('${file.public_id}')" class="action-btn delete-btn" title="Supprimer">
+                                <button onclick="deleteFromCloudinary('${file.public_id}')" class="action-btn delete-btn" title="Supprimer">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </div>
@@ -601,25 +634,51 @@
             }
         }
         
-        // Delete file function
-        async function deleteFile(public_id) {
+        // Delete file from Cloudinary
+        async function deleteFromCloudinary(public_id) {
             if (!confirm(`Voulez-vous vraiment supprimer ce document ?`)) return;
             
             try {
                 showStatus('Suppression en cours...', 'loading');
                 
-                const response = await fetch(`${API_BASE_URL}/api/delete/${public_id}`, {
-                    method: 'DELETE'
+                // First delete from your database (if stored)
+                await axios.delete(`/api/delete-file/${public_id}`);
+                
+                // Then delete from Cloudinary
+                const timestamp = Math.floor(Date.now() / 1000);
+                const signature = await generateCloudinarySignature(public_id, timestamp);
+                
+                await axios.post(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/destroy`, {
+                    public_id: public_id,
+                    signature: signature,
+                    api_key: '425663896911421',
+                    timestamp: timestamp
                 });
                 
-                if (!response.ok) throw new Error('Erreur de suppression');
-                
                 showStatus('Document supprimé avec succès', 'success');
-                await loadFiles();
+                await loadFilesFromCloudinary();
             } catch (error) {
                 showStatus(`Erreur: ${error.message}`, 'error');
                 console.error('Erreur:', error);
             }
+        }
+        
+        // Generate Cloudinary signature for deletion (should be done server-side in production)
+        async function generateCloudinarySignature(public_id, timestamp) {
+            // In production, call your backend API to generate the signature
+            // This is just a mock implementation
+            const secret = 'Vp8j_w8fW9n53AGyNUg8gxCBvko';
+            const signature_string = `public_id=${public_id}&timestamp=${timestamp}${secret}`;
+            return sha1(signature_string); // You would need a SHA-1 library
+        }
+        
+        // Format file size
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         }
         
         // Show status message
@@ -643,11 +702,11 @@
             }, 5000);
         }
         
-        // Make deleteFile available globally
-        window.deleteFile = deleteFile;
+        // Make deleteFromCloudinary available globally
+        window.deleteFromCloudinary = deleteFromCloudinary;
         
         // Initial load
-        document.addEventListener('DOMContentLoaded', loadFiles);
+        document.addEventListener('DOMContentLoaded', loadFilesFromCloudinary);
     </script>
 </body>
 </html>
