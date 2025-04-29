@@ -10,14 +10,9 @@
       "use": "@vercel/static"
     }
   ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "api/server.js"
-    },
-    {
-      "src": "/SAP-Customer",
-      "dest": "public/SAP-Customer.html"
-    }
+ "routes": [
+    { "src": "/",      "dest": "public/SAP-Customer.html" },
+    { "src": "/SAP-Customer", "dest": "public/SAP-Customer.html" },
+    { "src": "/api/(.*)",     "dest": "api/server.js" }
   ]
 }
