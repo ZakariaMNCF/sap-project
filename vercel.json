@@ -20,6 +20,10 @@
       "src": "/SAP-Customer",
       "dest": "public/SAP-Customer.html",
       "methods": ["GET"]
+    },
+    {
+      "src": "/",
+      "dest": "public/SAP-Customer.html"
     }
   ]
 }
