@@ -10,9 +10,16 @@
       "use": "@vercel/static"
     }
   ],
- "routes": [
-    { "src": "/",      "dest": "public/SAP-Customer.html" },
-    { "src": "/SAP-Customer", "dest": "public/SAP-Customer.html" },
-    { "src": "/api/(.*)",     "dest": "api/server.js" }
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "api/server.js",
+      "methods": ["GET", "POST", "DELETE", "OPTIONS"]
+    },
+    {
+      "src": "/SAP-Customer",
+      "dest": "public/SAP-Customer.html",
+      "methods": ["GET"]
+    }
   ]
 }
