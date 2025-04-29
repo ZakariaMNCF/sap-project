@@ -253,30 +253,13 @@
             flex-shrink: 0;
         }
 
-        .pdf-icon {
-            background-color: #e74c3c;
-        }
+        .pdf-icon { background-color: #e74c3c; }
+        .doc-icon { background-color: #2c5ec1; }
+        .xls-icon { background-color: #1d6f42; }
+        .img-icon { background-color: #e67e22; }
+        .vid-icon { background-color: #9b59b6; }
 
-        .doc-icon {
-            background-color: #2c5ec1;
-        }
-
-        .xls-icon {
-            background-color: #1d6f42;
-        }
-
-        .img-icon {
-            background-color: #e67e22;
-        }
-
-        .vid-icon {
-            background-color: #9b59b6;
-        }
-
-        .file-details {
-            flex: 1;
-            min-width: 0;
-        }
+        .file-details { flex: 1; min-width: 0; }
 
         .file-name {
             font-weight: 500;
@@ -293,10 +276,7 @@
             gap: 1rem;
         }
 
-        .file-actions {
-            display: flex;
-            gap: 0.5rem;
-        }
+        .file-actions { display: flex; gap: 0.5rem; }
 
         .action-btn {
             width: 36px;
@@ -317,13 +297,8 @@
             color: var(--dark-color);
         }
 
-        .download-btn:hover {
-            color: var(--success-color);
-        }
-
-        .delete-btn:hover {
-            color: var(--danger-color);
-        }
+        .download-btn:hover { color: var(--success-color); }
+        .delete-btn:hover { color: var(--danger-color); }
 
         .empty-state {
             padding: 3rem 1.5rem;
@@ -331,11 +306,7 @@
             color: #6c757d;
         }
 
-        .empty-state i {
-            font-size: 3rem;
-            color: #dee2e6;
-            margin-bottom: 1rem;
-        }
+        .empty-state i { font-size: 3rem; color: #dee2e6; margin-bottom: 1rem; }
 
         .status {
             margin-top: 1rem;
@@ -348,40 +319,15 @@
             transition: var(--transition);
         }
 
-        .status.show {
-            opacity: 1;
-        }
-
-        .loading {
-            background-color: #fff3cd;
-            color: #856404;
-        }
-
-        .error {
-            background-color: #f8d7da;
-            color: #721c24;
-        }
-
-        .success {
-            background-color: #d4edda;
-            color: #155724;
-        }
+        .status.show { opacity: 1; }
+        .loading { background-color: #fff3cd; color: #856404; }
+        .error   { background-color: #f8d7da; color: #721c24; }
+        .success { background-color: #d4edda; color: #155724; }
 
         @media (max-width: 768px) {
-            .container {
-                padding: 1rem;
-                margin: 1rem;
-            }
-
-            .file-item {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 1rem;
-            }
-
-            .file-actions {
-                align-self: flex-end;
-            }
+            .container { padding: 1rem; margin: 1rem; }
+            .file-item { flex-direction: column; align-items: flex-start; gap: 1rem; }
+            .file-actions { align-self: flex-end; }
         }
 
         /* Animation for file upload */
@@ -391,9 +337,7 @@
             100% { transform: scale(1); }
         }
 
-        .pulse {
-            animation: pulse 1.5s infinite;
-        }
+        .pulse { animation: pulse 1.5s infinite; }
     </style>
 </head>
 <body>
@@ -405,7 +349,6 @@
 
         <div class="upload-section">
             <h2><i class="fas fa-cloud-upload-alt"></i> Téléverser un document</h2>
-            
             <form id="uploadForm">
                 <div class="file-upload">
                     <input type="file" id="fileInput" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.mp4,.mov" required>
@@ -419,12 +362,8 @@
                         <span id="fileName"></span>
                     </div>
                 </div>
-                
-                <button type="submit" class="btn btn-upload pulse">
-                    <i class="fas fa-upload"></i> Téléverser
-                </button>
+                <button type="submit" class="btn btn-upload pulse"><i class="fas fa-upload"></i> Téléverser</button>
             </form>
-            
             <div id="uploadStatus" class="status">
                 <i class="fas fa-circle-notch fa-spin"></i>
                 <span id="statusMessage"></span>
@@ -434,11 +373,8 @@
         <div class="file-list">
             <div class="file-list-header">
                 <h2><i class="fas fa-folder-open"></i> Documents téléversés</h2>
-                <button class="refresh-btn" id="refreshBtn">
-                    <i class="fas fa-sync-alt"></i>
-                </button>
+                <button class="refresh-btn" id="refreshBtn"><i class="fas fa-sync-alt"></i></button>
             </div>
-            
             <div class="file-list-content">
                 <ul id="fileList">
                     <li class="empty-state">
@@ -452,259 +388,129 @@
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
-        // Cloudinary Configuration
-        const CLOUDINARY_CLOUD_NAME = 'dtwvptox0';
-        const CLOUDINARY_UPLOAD_PRESET = 'sap_documents'; // Create this in Cloudinary Dashboard
-        
         // DOM Elements
-        const uploadForm = document.getElementById('uploadForm');
-        const fileInput = document.getElementById('fileInput');
-        const fileList = document.getElementById('fileList');
-        const uploadStatus = document.getElementById('uploadStatus');
+        const uploadForm    = document.getElementById('uploadForm');
+        const fileInput     = document.getElementById('fileInput');
+        const fileList      = document.getElementById('fileList');
+        const uploadStatus  = document.getElementById('uploadStatus');
         const statusMessage = document.getElementById('statusMessage');
-        const selectedFile = document.getElementById('selectedFile');
-        const fileName = document.getElementById('fileName');
-        const refreshBtn = document.getElementById('refreshBtn');
-        
-        // File input change handler
-        fileInput.addEventListener('change', (e) => {
-            if (fileInput.files.length > 0) {
+        const selectedFile  = document.getElementById('selectedFile');
+        const fileName      = document.getElementById('fileName');
+        const refreshBtn    = document.getElementById('refreshBtn');
+
+        // Show selected file
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length) {
                 selectedFile.style.display = 'flex';
                 fileName.textContent = fileInput.files[0].name;
             } else {
                 selectedFile.style.display = 'none';
             }
         });
-        
-        // Upload form handler
-        uploadForm.addEventListener('submit', async (e) => {
+
+        // Handle upload form submit
+        uploadForm.addEventListener('submit', async e => {
             e.preventDefault();
             await uploadToCloudinary();
         });
-        
-        // Refresh button handler
+
+        // Refresh file list
         refreshBtn.addEventListener('click', loadFilesFromCloudinary);
-        
-        // Upload file to Cloudinary
+
+        // Upload via your Express API
         async function uploadToCloudinary() {
             const file = fileInput.files[0];
-            if (!file) {
-                showStatus('Veuillez sélectionner un fichier', 'error');
-                return;
-            }
-            
+            if (!file) return showStatus('Veuillez sélectionner un fichier','error');
+
             const formData = new FormData();
             formData.append('file', file);
-            formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-            formData.append('cloud_name', CLOUDINARY_CLOUD_NAME);
-            
+
             try {
-                showStatus('Téléversement en cours...', 'loading');
-                
-                const response = await axios.post(
-                    `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/upload`,
-                    formData,
-                    {
-                        headers: {
-                            'Content-Type': 'multipart/form-data'
-                        },
-                        onUploadProgress: (progressEvent) => {
-                            const percentCompleted = Math.round(
-                                (progressEvent.loaded * 100) / progressEvent.total
-                            );
-                            showStatus(`Téléversement: ${percentCompleted}%`, 'loading');
-                        }
-                    }
-                );
-                
-                showStatus('Téléversement réussi!', 'success');
+                showStatus('Téléversement en cours…','loading');
+                const res = await axios.post('/api/upload', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+                showStatus('Téléversement réussi!','success');
                 fileInput.value = '';
                 selectedFile.style.display = 'none';
-                
-                // Store file metadata in your database (optional)
-                await storeFileMetadata(response.data);
-                
-                // Refresh file list
                 await loadFilesFromCloudinary();
-            } catch (error) {
-                showStatus(`Erreur: ${error.message}`, 'error');
-                console.error('Erreur Cloudinary:', error);
+            } catch (e) {
+                showStatus(`Erreur: ${e.message}`,'error');
             }
         }
-        
-        // Store file metadata in your database (optional)
-        async function storeFileMetadata(fileData) {
-            try {
-                await axios.post('/api/store-file', {
-                    public_id: fileData.public_id,
-                    secure_url: fileData.secure_url,
-                    format: fileData.format,
-                    bytes: fileData.bytes,
-                    created_at: fileData.created_at,
-                    original_filename: fileData.original_filename
-                });
-            } catch (error) {
-                console.error('Error storing metadata:', error);
-            }
-        }
-        
-        // Load files from Cloudinary
+
+        // Load list from your API
         async function loadFilesFromCloudinary() {
-            fileList.innerHTML = `
-                <li class="empty-state">
-                    <i class="fas fa-circle-notch fa-spin"></i>
-                    <p>Chargement des documents...</p>
-                </li>
-            `;
-            
+            fileList.innerHTML = `<li class="empty-state"><i class="fas fa-circle-notch fa-spin"></i><p>Chargement des documents...</p></li>`;
             try {
-                // In a real app, you would fetch from your own API that gets Cloudinary files
                 const response = await axios.get('/api/files');
-                const files = response.data.files || [];
-                
-                if (files.length > 0) {
+                const files = response.data.files;
+                if (files.length) {
                     fileList.innerHTML = '';
-                    
                     files.forEach(file => {
-                        const fileExt = file.format || file.original_filename.split('.').pop().toLowerCase();
-                        let iconClass = 'fas fa-file';
-                        let iconBg = 'default-icon';
-                        
-                        // Set appropriate icon based on file type
-                        if (fileExt === 'pdf') {
-                            iconClass = 'fas fa-file-pdf';
-                            iconBg = 'pdf-icon';
-                        } else if (['doc', 'docx'].includes(fileExt)) {
-                            iconClass = 'fas fa-file-word';
-                            iconBg = 'doc-icon';
-                        } else if (['xls', 'xlsx'].includes(fileExt)) {
-                            iconClass = 'fas fa-file-excel';
-                            iconBg = 'xls-icon';
-                        } else if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExt)) {
-                            iconClass = 'fas fa-file-image';
-                            iconBg = 'img-icon';
-                        } else if (['mp4', 'mov'].includes(fileExt)) {
-                            iconClass = 'fas fa-file-video';
-                            iconBg = 'vid-icon';
-                        }
-                        
+                        const ext = file.url.split('.').pop().toLowerCase();
+                        let iconClass = 'fas fa-file', iconBg = 'default-icon';
+                        if (ext === 'pdf') { iconClass='fas fa-file-pdf'; iconBg='pdf-icon'; }
+                        else if (['doc','docx'].includes(ext)) { iconClass='fas fa-file-word'; iconBg='doc-icon'; }
+                        else if (['xls','xlsx'].includes(ext)) { iconClass='fas fa-file-excel'; iconBg='xls-icon'; }
+                        else if (['jpg','jpeg','png','gif'].includes(ext)) { iconClass='fas fa-file-image'; iconBg='img-icon'; }
+                        else if (['mp4','mov'].includes(ext)) { iconClass='fas fa-file-video'; iconBg='vid-icon'; }
+
                         const li = document.createElement('li');
                         li.className = 'file-item';
                         li.innerHTML = `
                             <div class="file-info">
-                                <div class="file-icon ${iconBg}">
-                                    <i class="${iconClass}"></i>
-                                </div>
+                                <div class="file-icon ${iconBg}"><i class="${iconClass}"></i></div>
                                 <div class="file-details">
-                                    <div class="file-name" title="${file.original_filename}">${file.original_filename}</div>
+                                    <div class="file-name" title="${file.name}">${file.name}</div>
                                     <div class="file-meta">
-                                        <span><i class="fas fa-calendar-alt"></i> ${new Date(file.created_at).toLocaleDateString()}</span>
-                                        <span><i class="fas fa-file"></i> ${fileExt.toUpperCase()}</span>
-                                        <span><i class="fas fa-database"></i> ${formatFileSize(file.bytes)}</span>
+                                        <span><i class="fas fa-calendar-alt"></i> ${new Date().toLocaleDateString()}</span>
+                                        <span><i class="fas fa-file"></i> ${ext.toUpperCase()}</span>
+                                        <span><i class="fas fa-database"></i> --</span>
                                     </div>
                                 </div>
                             </div>
                             <div class="file-actions">
-                                <a href="${file.secure_url}" target="_blank" class="action-btn download-btn" title="Télécharger">
-                                    <i class="fas fa-download"></i>
-                                </a>
-                                <button onclick="deleteFromCloudinary('${file.public_id}')" class="action-btn delete-btn" title="Supprimer">
-                                    <i class="fas fa-trash"></i>
-                                </button>
+                                <a href="${file.url}" target="_blank" class="action-btn download-btn" title="Télécharger"><i class="fas fa-download"></i></a>
+                                <button onclick="deleteFromCloudinary('${file.public_id}')" class="action-btn delete-btn" title="Supprimer"><i class="fas fa-trash"></i></button>
                             </div>
                         `;
                         fileList.appendChild(li);
                     });
                 } else {
-                    fileList.innerHTML = `
-                        <li class="empty-state">
-                            <i class="fas fa-folder-open"></i>
-                            <p>Aucun document téléversé</p>
-                        </li>
-                    `;
+                    fileList.innerHTML = `<li class="empty-state"><i class="fas fa-folder-open"></i><p>Aucun document téléversé</p></li>`;
                 }
-            } catch (error) {
-                fileList.innerHTML = `
-                    <li class="empty-state">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <p>Erreur de chargement des documents</p>
-                    </li>
-                `;
-                console.error('Erreur:', error);
+            } catch (e) {
+                fileList.innerHTML = `<li class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>Erreur de chargement des documents</p></li>`;
+                console.error(e);
             }
         }
-        
-        // Delete file from Cloudinary
+
+        // Delete via your Express API
         async function deleteFromCloudinary(public_id) {
-            if (!confirm(`Voulez-vous vraiment supprimer ce document ?`)) return;
-            
+            if (!confirm('Voulez-vous vraiment supprimer ce document ?')) return;
             try {
-                showStatus('Suppression en cours...', 'loading');
-                
-                // First delete from your database (if stored)
-                await axios.delete(`/api/delete-file/${public_id}`);
-                
-                // Then delete from Cloudinary
-                const timestamp = Math.floor(Date.now() / 1000);
-                const signature = await generateCloudinarySignature(public_id, timestamp);
-                
-                await axios.post(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/destroy`, {
-                    public_id: public_id,
-                    signature: signature,
-                    api_key: '425663896911421',
-                    timestamp: timestamp
-                });
-                
-                showStatus('Document supprimé avec succès', 'success');
+                showStatus('Suppression en cours…','loading');
+                await axios.delete(`/api/delete/${public_id}`);
+                showStatus('Document supprimé avec succès','success');
                 await loadFilesFromCloudinary();
-            } catch (error) {
-                showStatus(`Erreur: ${error.message}`, 'error');
-                console.error('Erreur:', error);
+            } catch (e) {
+                showStatus(`Erreur: ${e.message}`,'error');
+                console.error(e);
             }
         }
-        
-        // Generate Cloudinary signature for deletion (should be done server-side in production)
-        async function generateCloudinarySignature(public_id, timestamp) {
-            // In production, call your backend API to generate the signature
-            // This is just a mock implementation
-            const secret = 'Vp8j_w8fW9n53AGyNUg8gxCBvko';
-            const signature_string = `public_id=${public_id}&timestamp=${timestamp}${secret}`;
-            return sha1(signature_string); // You would need a SHA-1 library
-        }
-        
-        // Format file size
-        function formatFileSize(bytes) {
-            if (bytes === 0) return '0 Bytes';
-            const k = 1024;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-        }
-        
-        // Show status message
+
+        // Show status
         function showStatus(message, type) {
             statusMessage.textContent = message;
             uploadStatus.className = `status show ${type}`;
-            
-            // Set appropriate icon
             const icon = uploadStatus.querySelector('i');
-            if (type === 'loading') {
-                icon.className = 'fas fa-circle-notch fa-spin';
-            } else if (type === 'error') {
-                icon.className = 'fas fa-exclamation-circle';
-            } else {
-                icon.className = 'fas fa-check-circle';
-            }
-            
-            // Hide after 5 seconds
-            setTimeout(() => {
-                uploadStatus.classList.remove('show');
-            }, 5000);
+            if (type==='loading') icon.className='fas fa-circle-notch fa-spin';
+            else if (type==='error') icon.className='fas fa-exclamation-circle';
+            else icon.className='fas fa-check-circle';
+            setTimeout(() => uploadStatus.classList.remove('show'), 5000);
         }
-        
-        // Make deleteFromCloudinary available globally
-        window.deleteFromCloudinary = deleteFromCloudinary;
-        
+
         // Initial load
         document.addEventListener('DOMContentLoaded', loadFilesFromCloudinary);
     </script>
