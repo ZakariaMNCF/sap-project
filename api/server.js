@@ -1,16 +1,37 @@
 require('dotenv').config();
 const express = require('express');
 const path = require('path');
+const cors = require('cors');
+const helmet = require('helmet');
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const multer = require('multer');
-const cors = require('cors');
 
 const app = express();
 
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(helmet());
+
+// CORS Configuration
+const allowedOrigins = [
+  'https://zakariamncf.github.io/sap-project',
+  'https://sap-project-3ivi.vercel.app',
+  'http://localhost:3000'
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: ['GET', 'POST', 'DELETE'],
+  credentials: true
+}));
 
 // Cloudinary Config
 cloudinary.config({
@@ -29,44 +50,27 @@ const storage = new CloudinaryStorage({
     resource_type: 'auto'
   }
 });
-const upload = multer({ storage });
 
-// CORS Configuration
-const allowedOrigins = [
-  'https://zakariamncf.github.io/sap-project',
-  'https://sap-project-3ivi.vercel.app',
-  'http://localhost:3000'
-];
-
-app.use(cors({
-  origin: function(origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  methods: ['GET', 'POST', 'DELETE'],
-  credentials: true
-}));
+const upload = multer({
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB file size limit
+});
 
 // Static Files
 app.use(express.static(path.join(__dirname, '../public')));
 
-// API Routes
-app.post('/api/upload', upload.single('file'), async (req, res) => {
-  try {
-    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-    
-    res.json({
-      success: true,
-      filename: req.file.originalname,
-      url: req.file.path,
-      public_id: req.file.filename
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+// Routes
+app.post('/api/upload', upload.single('file'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No file uploaded' });
   }
+
+  res.json({
+    success: true,
+    filename: req.file.originalname,
+    url: req.file.path,
+    public_id: req.file.filename
+  });
 });
 
 app.get('/api/files', async (req, res) => {
@@ -75,15 +79,15 @@ app.get('/api/files', async (req, res) => {
       type: 'upload',
       prefix: 'sap-uploads/'
     });
-    
-    res.json({ 
-      files: result.resources.map(file => ({
-        name: file.original_filename || file.public_id,
-        url: file.secure_url,
-        public_id: file.public_id,
-        type: file.resource_type
-      }))
-    });
+
+    const files = result.resources.map(file => ({
+      name: file.original_filename || file.public_id,
+      url: file.secure_url,
+      public_id: file.public_id,
+      type: file.resource_type
+    }));
+
+    res.json({ files });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -91,29 +95,33 @@ app.get('/api/files', async (req, res) => {
 
 app.delete('/api/delete/:public_id', async (req, res) => {
   try {
-    await cloudinary.uploader.destroy(req.params.public_id);
+    const result = await cloudinary.uploader.destroy(req.params.public_id);
+    if (result.result === 'not found') {
+      return res.status(404).json({ error: 'File not found' });
+    }
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// Frontend Routes
+// Frontend HTML Route
 app.get('/SAP-Customer', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/SAP-Customer.html'));
 });
 
-// Error Handling
+// 404 Route
 app.use((req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });
 
+// Global Error Handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ error: 'Server error' });
 });
 
-// Server Start
+// Start Server
 const PORT = process.env.PORT || 3000;
 if (require.main === module) {
   app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
