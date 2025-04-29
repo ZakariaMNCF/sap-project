@@ -34,7 +34,7 @@ const upload = multer({ storage });
 // CORS Configuration
 const allowedOrigins = [
   'https://zakariamncf.github.io/sap-project',
-  'https://sap-project-nine.vercel.app',
+  'https://sap-project-3ivi.vercel.app',
   'http://localhost:3000'
 ];
 
