@@ -36,35 +36,39 @@ app.use(cors({
 // Cloudinary Config
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
+  api_key:    process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
-  secure: true
+  secure:     true
 });
 
 // Multer Storage
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
-    folder: 'sap-uploads',
-    allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'mp4', 'mov'],
-    resource_type: 'auto'
+    folder:          'sap-uploads',
+    allowed_formats: ['jpg','jpeg','png','gif','pdf','doc','docx','xls','xlsx','mp4','mov'],
+    resource_type:   'auto'
   }
 });
 
 const upload = multer({
   storage,
-  limits: { fileSize: 10 * 1024 * 1024 } // 10MB file size limit
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
 });
 
-// Static Files
+// Serve static files from public/
 app.use(express.static(path.join(__dirname, '../public')));
 
-// Routes
+// Serve the customer page at root
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/SAP-Customer.html'));
+});
+
+// API Routes
 app.post('/api/upload', upload.single('file'), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'No file uploaded' });
   }
-
   res.json({
     success: true,
     filename: req.file.originalname,
@@ -81,10 +85,10 @@ app.get('/api/files', async (req, res) => {
     });
 
     const files = result.resources.map(file => ({
-      name: file.original_filename || file.public_id,
-      url: file.secure_url,
-      public_id: file.public_id,
-      type: file.resource_type
+      name:        file.original_filename || file.public_id,
+      url:         file.secure_url,
+      public_id:   file.public_id,
+      type:        file.resource_type
     }));
 
     res.json({ files });
@@ -105,12 +109,12 @@ app.delete('/api/delete/:public_id', async (req, res) => {
   }
 });
 
-// Frontend HTML Route
+// Optional route to serve the same page
 app.get('/SAP-Customer', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/SAP-Customer.html'));
 });
 
-// 404 Route
+// 404 Handler
 app.use((req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });
