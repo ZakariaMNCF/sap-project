@@ -1,79 +1,74 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>File Uploader</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-  <style>
-    body { font-family: Arial; padding: 20px; }
-    #fileList { margin-top: 20px; }
-    .file-item { margin-bottom: 10px; }
-  </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>File Upload App</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <div class="container">
+    <h1>Upload a File</h1>
+    <form id="uploadForm">
+      <input type="file" name="file" required />
+      <button type="submit">Upload</button>
+    </form>
+    <div id="message"></div>
+    <h2>Uploaded Files</h2>
+    <ul id="fileList"></ul>
+  </div>
 
-  <h1>Upload a File</h1>
-  <input type="file" id="fileInput">
-  <button onclick="uploadFile()">Upload</button>
-
-  <p id="message"></p>
-
-  <h2>Uploaded Files</h2>
-  <div id="fileList"></div>
-
-  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="axios.min.js"></script>
   <script>
-    const API_URL = 'https://sap-project-production.up.railway.app';
+    const form = document.getElementById('uploadForm');
+    const fileList = document.getElementById('fileList');
+    const message = document.getElementById('message');
 
-    async function uploadFile() {
-      const input = document.getElementById('fileInput');
-      const file = input.files[0];
-      if (!file) return alert("Please select a file");
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const file = form.file.files[0];
+      if (!file) return;
 
-      const formData = new FormData();
-      formData.append('file', file);
+      const data = new FormData();
+      data.append('file', file);
 
       try {
-        await axios.post(`${API_URL}/api/upload`, formData);
-        document.getElementById('message').innerText = "Upload successful!";
-        refreshFileList();
+        const res = await axios.post('/api/upload', data);
+        message.textContent = "File uploaded successfully!";
+        form.reset();
+        fetchFiles();
       } catch (err) {
-        document.getElementById('message').innerText = "Error during upload.";
+        message.textContent = "Upload failed.";
       }
-    }
+    });
 
-    async function refreshFileList() {
+    async function fetchFiles() {
       try {
-        const res = await axios.get(`${API_URL}/api/files`);
-        const files = res.data.files;
-
-        const container = document.getElementById('fileList');
-        container.innerHTML = '';
-
-        files.forEach(f => {
-          const el = document.createElement('div');
-          el.className = 'file-item';
-          el.innerHTML = `
-            <a href="${f.url}" target="_blank">${f.name}</a>
-            <button onclick="deleteFile('${f.public_id}')">Delete</button>
+        const res = await axios.get('/api/files');
+        fileList.innerHTML = "";
+        res.data.forEach(file => {
+          const li = document.createElement('li');
+          li.innerHTML = `
+            <a href="${file.url}" target="_blank">${file.name}</a>
+            <button onclick="deleteFile('${file.public_id}')">Delete</button>
           `;
-          container.appendChild(el);
+          fileList.appendChild(li);
         });
-      } catch (err) {
-        console.error("Failed to load files", err);
+      } catch {
+        message.textContent = "Could not load files.";
       }
     }
 
-    async function deleteFile(public_id) {
+    async function deleteFile(publicId) {
       try {
-        await axios.delete(`${API_URL}/api/delete/${public_id}`);
-        refreshFileList();
-      } catch (err) {
-        alert("Error deleting file");
+        await axios.delete(`/api/delete/${publicId}`);
+        fetchFiles();
+      } catch {
+        alert("Delete failed.");
       }
     }
 
-    window.onload = refreshFileList;
+    fetchFiles();
   </script>
 </body>
 </html>
