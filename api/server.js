@@ -16,7 +16,7 @@ app.use(helmet());
 
 // CORS Configuration
 const allowedOrigins = [
-  'https://github.com/ZakariaMNCF/sap-project',
+  'https://zakariamncf.github.io',
   'https://sap-project-production.up.railway.app',
   'http://localhost:3000'
 ];
