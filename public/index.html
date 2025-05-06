@@ -1,367 +1,324 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SAP - Gestion des Documents Clients</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --primary-color: #005f9e;
-            --secondary-color: #00a1e4;
-            --accent-color: #ff6d00;
-            --light-color: #f8f9fa;
-            --dark-color: #343a40;
-            --success-color: #28a745;
-            --danger-color: #dc3545;
-            --warning-color: #ffc107;
-            --border-radius: 8px;
-            --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            --transition: all 0.3s ease;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            background-color: #f5f7fa;
-            color: #333;
-        }
-        .container {
-            max-width: 900px;
-            margin: 2rem auto;
-            padding: 2rem;
-            background: white;
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
-        }
-        header {
-            text-align: center;
-            margin-bottom: 2rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid #eee;
-        }
-        h1 { color: var(--primary-color); margin-bottom: 0.5rem; font-size: 2.2rem; }
-        .subtitle { color: var(--secondary-color); font-size: 1.1rem; }
-        .upload-section {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            padding: 2rem;
-            border-radius: var(--border-radius);
-            margin-bottom: 2rem;
-            border: 2px dashed #d1d5db;
-            transition: var(--transition);
-        }
-        .upload-section:hover { border-color: var(--secondary-color); }
-        .upload-section h2 {
-            color: var(--primary-color);
-            margin-bottom: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .upload-section h2 i { color: var(--secondary-color); }
-        .file-upload { position: relative; margin-bottom: 1.5rem; }
-        .file-upload input[type="file"] {
-            position: absolute; left: 0; top: 0; opacity: 0;
-            width: 100%; height: 100%; cursor: pointer;
-        }
-        .file-upload-label {
-            display: block; padding: 2rem; text-align: center;
-            border: 2px dashed #adb5bd; border-radius: var(--border-radius);
-            background: white; transition: var(--transition);
-        }
-        .file-upload-label:hover {
-            border-color: var(--secondary-color);
-            background: #f8f9fa;
-        }
-        .file-upload-label i {
-            font-size: 2.5rem; color: var(--secondary-color);
-            margin-bottom: 1rem;
-        }
-        .file-upload-label p { margin-bottom: 0.5rem; font-weight: 500; }
-        .file-upload-label small { color: #6c757d; }
-        .selected-file {
-            margin-top: 1rem; padding: 0.75rem;
-            background: #e9f7fe; border-radius: var(--border-radius);
-            display: none; align-items: center; gap: 0.75rem;
-        }
-        .selected-file i { color: var(--secondary-color); }
-        .btn {
-            display: inline-block; padding: 0.75rem 1.5rem;
-            background-color: var(--primary-color); color: white;
-            border: none; border-radius: var(--border-radius);
-            font-size: 1rem; font-weight: 500;
-            cursor: pointer; transition: var(--transition);
-            text-align: center; width: 100%;
-        }
-        .btn:hover { background-color: #004a7c; transform: translateY(-2px); }
-        .btn i { margin-right: 0.5rem; }
-        .btn-upload { background-color: var(--accent-color); }
-        .btn-upload:hover { background-color: #e05d00; }
-        .file-list {
-            background: white; border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow); overflow: hidden;
-        }
-        .file-list-header {
-            padding: 1rem 1.5rem; background: var(--primary-color);
-            color: white; display: flex; align-items: center;
-            justify-content: space-between;
-        }
-        .file-list-header h2 {
-            font-size: 1.25rem; display: flex; align-items: center;
-            gap: 0.5rem;
-        }
-        .refresh-btn {
-            background: none; border: none; color: white;
-            cursor: pointer; font-size: 1rem; display: flex;
-            align-items: center; gap: 0.5rem; transition: var(--transition);
-        }
-        .refresh-btn:hover { transform: rotate(180deg); }
-        .file-list-content {
-            max-height: 400px; overflow-y: auto;
-        }
-        .file-item {
-            padding: 1rem 1.5rem; border-bottom: 1px solid #eee;
-            display: flex; align-items: center; justify-content: space-between;
-            transition: var(--transition);
-        }
-        .file-item:hover { background-color: #f8f9fa; }
-        .file-info {
-            display: flex; align-items: center; gap: 1rem;
-            flex: 1; min-width: 0;
-        }
-        .file-icon {
-            width: 40px; height: 40px; display: flex;
-            align-items: center; justify-content: center;
-            border-radius: 6px; color: white; flex-shrink: 0;
-        }
-        .pdf-icon { background-color: #e74c3c; }
-        .doc-icon { background-color: #2c5ec1; }
-        .xls-icon { background-color: #1d6f42; }
-        .img-icon { background-color: #e67e22; }
-        .vid-icon { background-color: #9b59b6; }
-        .file-details { flex: 1; min-width: 0; }
-        .file-name {
-            font-weight: 500; white-space: nowrap;
-            overflow: hidden; text-overflow: ellipsis;
-            margin-bottom: 0.25rem;
-        }
-        .file-meta {
-            font-size: 0.85rem; color: #6c757d;
-            display: flex; gap: 1rem;
-        }
-        .file-actions { display: flex; gap: 0.5rem; }
-        .action-btn {
-            width: 36px; height: 36px; border-radius: 50%;
-            border: none; background: none; color: #6c757d;
-            cursor: pointer; display: flex;
-            align-items: center; justify-content: center;
-            transition: var(--transition);
-        }
-        .action-btn:hover { background-color: #e9ecef; color: var(--dark-color); }
-        .download-btn:hover { color: var(--success-color); }
-        .delete-btn:hover { color: var(--danger-color); }
-        .empty-state {
-            padding: 3rem 1.5rem; text-align: center;
-            color: #6c757d;
-        }
-        .empty-state i {
-            font-size: 3rem; color: #dee2e6; margin-bottom: 1rem;
-        }
-        .status {
-            margin-top: 1rem; padding: 0.75rem 1rem;
-            border-radius: var(--border-radius);
-            display: flex; align-items: center; gap: 0.75rem;
-            opacity: 0; transition: var(--transition);
-        }
-        .status.show { opacity: 1; }
-        .loading { background-color: #fff3cd; color: #856404; }
-        .error   { background-color: #f8d7da; color: #721c24; }
-        .success { background-color: #d4edda; color: #155724; }
-        @media (max-width: 768px) {
-            .container { padding: 1.5rem; }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>SAP - Gestion des Documents Clients</title>
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="/static/all.min.css">
+  <style>
+    :root {
+      --primary-color: #005f9e;
+      --secondary-color: #00a1e4;
+      --accent-color: #ff6d00;
+      --border-radius: 8px;
+      --box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      --transition: all 0.3s ease;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: #f5f7fa; color: #333; line-height: 1.6;
+    }
+    .container {
+      max-width: 900px; margin: 2rem auto; padding: 2rem;
+      background: #fff; border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
+    }
+    header { text-align: center; margin-bottom: 2rem; }
+    h1 { color: var(--primary-color); font-size: 2.2rem; }
+    .subtitle { color: var(--secondary-color); font-size: 1.1rem; }
+    .upload-section {
+      background: linear-gradient(135deg,#f8f9fa,#e9ecef);
+      padding: 2rem; border: 2px dashed #d1d5db;
+      border-radius: var(--border-radius);
+      margin-bottom: 2rem; transition: var(--transition);
+    }
+    .upload-section:hover { border-color: var(--secondary-color); }
+    .upload-section h2 {
+      display: flex; align-items: center; gap: .5rem;
+      color: var(--primary-color); margin-bottom: 1.5rem;
+    }
+    .file-upload { position: relative; margin-bottom: 1.5rem; }
+    .file-upload input[type=file] {
+      position: absolute; width:100%; height:100%; top:0; left:0;
+      opacity:0; cursor: pointer;
+    }
+    .file-upload-label {
+      display:block; padding:2rem; text-align:center;
+      border:2px dashed #adb5bd; border-radius:var(--border-radius);
+      background:#fff; transition:var(--transition);
+    }
+    .file-upload-label:hover { background:#f8f9fa; }
+    .file-upload-label i {
+      font-size:2.5rem; color:var(--secondary-color);
+      margin-bottom:1rem;
+    }
+    .file-upload-label p { margin-bottom:.5rem; font-weight:500; }
+    .file-upload-label small { color:#6c757d; }
+    .selected-file {
+      display:none; margin-top:1rem; padding:.75rem;
+      background:#e9f7fe; border-radius:var(--border-radius);
+      align-items:center; gap:.75rem;
+    }
+    .selected-file i { color:var(--secondary-color); }
+    .btn {
+      display:inline-block; width:100%; padding:.75rem 1.5rem;
+      border:none; border-radius:var(--border-radius);
+      font-size:1rem; font-weight:500; cursor:pointer;
+      transition:var(--transition); text-align:center;
+      background:var(--primary-color); color:#fff;
+    }
+    .btn:hover { background:#004a7c; transform: translateY(-2px); }
+    .btn-upload { background: var(--accent-color); }
+    .btn-upload:hover { background:#e05d00; }
+    .file-list {
+      background:#fff; border-radius:var(--border-radius);
+      box-shadow:var(--box-shadow); overflow:hidden;
+    }
+    .file-list-header {
+      display:flex; align-items:center; justify-content:space-between;
+      background:var(--primary-color); color:#fff;
+      padding:1rem 1.5rem;
+    }
+    .refresh-btn {
+      background:none; border:none; color:#fff; cursor:pointer;
+      display:flex; align-items:center; gap:.5rem;
+      transition:var(--transition);
+    }
+    .refresh-btn:hover { transform: rotate(180deg); }
+    .file-list-content {
+      max-height:400px; overflow-y:auto;
+    }
+    .file-item {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:1rem 1.5rem; border-bottom:1px solid #eee;
+      transition:var(--transition);
+    }
+    .file-item:hover { background:#f8f9fa; }
+    .file-info { display:flex; align-items:center; gap:1rem; flex:1; }
+    .file-icon {
+      width:40px; height:40px; display:flex;
+      align-items:center; justify-content:center;
+      border-radius:6px; color:#fff; flex-shrink:0;
+    }
+    .pdf-icon { background:#e74c3c; }
+    .doc-icon { background:#2c5ec1; }
+    .xls-icon { background:#1d6f42; }
+    .img-icon { background:#e67e22; }
+    .vid-icon { background:#9b59b6; }
+    .file-details { flex:1; min-width:0; }
+    .file-name {
+      font-weight:500; white-space:nowrap;
+      overflow:hidden; text-overflow:ellipsis;
+      margin-bottom:.25rem;
+    }
+    .file-meta { font-size:.85rem; color:#6c757d; }
+    .file-actions { display:flex; gap:.5rem; }
+    .action-btn {
+      width:36px; height:36px; border-radius:50%;
+      border:none; background:none; color:#6c757d;
+      cursor:pointer; display:flex; align-items:center;
+      justify-content:center; transition:var(--transition);
+    }
+    .action-btn:hover { background:#e9ecef; color:#343a40; }
+    .download-btn:hover { color:#28a745; }
+    .delete-btn:hover { color:#dc3545; }
+    .empty-state {
+      text-align:center; padding:3rem 1.5rem; color:#6c757d;
+    }
+    .empty-state i { font-size:3rem; margin-bottom:1rem; color:#dee2e6; }
+    .status {
+      margin-top:1rem; padding:.75rem 1rem;
+      border-radius:var(--border-radius);
+      opacity:0; transition:var(--transition);
+    }
+    .status.show { opacity:1; }
+    .loading { background:#fff3cd; color:#856404; }
+    .success { background:#d4edda; color:#155724; }
+    .error { background:#f8d7da; color:#721c24; }
+    @media (max-width:768px) {
+      .container { padding:1.5rem; }
+    }
+  </style>
 </head>
 <body>
-
-<div class="container">
+  <div class="container">
     <header>
-        <h1>Gestion des Documents Clients</h1>
-        <p class="subtitle">Upload et gestion des documents associés à chaque client</p>
+      <h1>Gestion des Documents Clients</h1>
+      <p class="subtitle">Upload et gestion des documents associés à chaque client</p>
     </header>
 
     <div class="upload-section">
-        <h2><i class="fas fa-cloud-upload-alt"></i> Télécharger un Document</h2>
-        <div class="file-upload">
-            <label class="file-upload-label" for="fileInput">
-                <i class="fas fa-upload"></i>
-                <p>Sélectionner ou glisser-déposer un fichier</p>
-                <small>Les formats pris en charge: PDF, DOCX, XLSX, JPG, PNG</small>
-            </label>
-            <input type="file" id="fileInput">
-        </div>
-        <button id="uploadBtn" class="btn btn-upload"><i class="fas fa-arrow-up"></i> Upload</button>
-        <div class="selected-file" id="selectedFile">
-            <i class="fas fa-file-alt"></i>
-            <span id="fileName"></span>
-        </div>
+      <h2><i class="fas fa-cloud-upload-alt"></i> Télécharger un document</h2>
+      <div class="file-upload">
+        <label class="file-upload-label" for="fileInput">
+          <i class="fas fa-upload"></i>
+          <p>Sélectionner ou glisser-déposer un fichier</p>
+          <small>Formats pris en charge : PDF, DOCX, XLSX, JPG, PNG, MP4</small>
+        </label>
+        <input type="file" id="fileInput">
+      </div>
+      <button id="uploadBtn" class="btn btn-upload">
+        <i class="fas fa-arrow-up"></i> Upload
+      </button>
+      <div class="selected-file" id="selectedFile">
+        <i class="fas fa-file-alt"></i>
+        <span id="fileName"></span>
+      </div>
     </div>
 
     <div class="file-list">
-        <div class="file-list-header">
-            <h2><i class="fas fa-folder-open"></i> Liste des Documents</h2>
-            <button id="refreshBtn" class="refresh-btn"><i class="fas fa-sync"></i> Rafraîchir</button>
+      <div class="file-list-header">
+        <h2><i class="fas fa-folder-open"></i> Liste des documents</h2>
+        <button id="refreshBtn" class="refresh-btn">
+          <i class="fas fa-sync"></i> Rafraîchir
+        </button>
+      </div>
+      <div class="file-list-content" id="fileListContent">
+        <div class="empty-state">
+          <i class="fas fa-folder-open"></i>
+          <p>Aucun fichier n'a été téléchargé.</p>
         </div>
-        <div class="file-list-content" id="fileListContent">
-            <div class="empty-state">
-                <i class="fas fa-folder-open"></i>
-                <p>Aucun fichier n'a été téléchargé. Cliquez sur le bouton "Télécharger un Document" pour commencer.</p>
-            </div>
-        </div>
+      </div>
     </div>
 
-    <div class="status" id="status"></div>
-</div>
+    <div id="status" class="status"></div>
+  </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.5.0/axios.min.js"></script>
-<script>
-    const uploadURL = 'https://sap-project-production.up.railway.app/api/upload';
-    const filesURL  = 'https://sap-project-production.up.railway.app/api/files';
+  <script src="/static/axios.min.js"></script>
+  <script>
+    const uploadURL  = 'https://sap-project-production.up.railway.app/api/upload';
+    const filesURL   = 'https://sap-project-production.up.railway.app/api/files';
 
-    const uploadBtn        = document.getElementById('uploadBtn');
-    const refreshBtn       = document.getElementById('refreshBtn');
-    const fileInput        = document.getElementById('fileInput');
-    const selectedFile     = document.getElementById('selectedFile');
-    const fileName         = document.getElementById('fileName');
-    const status           = document.getElementById('status');
-    const fileListContent  = document.getElementById('fileListContent');
-    let file = null;
+    const fileInput       = document.getElementById('fileInput');
+    const uploadBtn       = document.getElementById('uploadBtn');
+    const refreshBtn      = document.getElementById('refreshBtn');
+    const selectedFile    = document.getElementById('selectedFile');
+    const fileNameSpan    = document.getElementById('fileName');
+    const fileListContent = document.getElementById('fileListContent');
+    const statusEl        = document.getElementById('status');
+    let selectedFileObj   = null;
 
+    // Sélection de fichier
     fileInput.addEventListener('change', () => {
-        const selected = fileInput.files[0];
-        if (selected) {
-            file = selected;
-            selectedFile.style.display = 'flex';
-            fileName.textContent = file.name;
-        }
+      const f = fileInput.files[0];
+      if (!f) return;
+      selectedFileObj = f;
+      selectedFile.style.display = 'flex';
+      fileNameSpan.textContent = f.name;
     });
 
+    // Upload
     uploadBtn.addEventListener('click', async () => {
-        if (!file) {
-            alert('Veuillez sélectionner un fichier à télécharger.');
-            return;
-        }
-
-        const formData = new FormData();
-        formData.append('file', file);
-
-        try {
-            status.classList.remove('error', 'success');
-            status.classList.add('loading', 'show');
-            status.textContent = 'Chargement en cours...';
-
-            await axios.post(uploadURL, formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
-
-            status.classList.remove('loading');
-            status.classList.add('success');
-            status.textContent = 'Téléchargement réussi!';
-            refreshFileList();
-        } catch (error) {
-            status.classList.remove('loading');
-            status.classList.add('error', 'show');
-            status.textContent = 'Erreur lors du téléchargement.';
-        }
+      if (!selectedFileObj) {
+        alert('Veuillez sélectionner un fichier à uploader.');
+        return;
+      }
+      const form = new FormData();
+      form.append('file', selectedFileObj);
+      try {
+        statusEl.className = 'status loading show';
+        statusEl.textContent = 'Chargement en cours...';
+        await axios.post(uploadURL, form, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        statusEl.className = 'status success show';
+        statusEl.textContent = 'Téléchargement réussi !';
+        refreshFileList();
+      } catch {
+        statusEl.className = 'status error show';
+        statusEl.textContent = 'Erreur lors du téléchargement.';
+      }
     });
 
-    refreshBtn.addEventListener('click', refreshFileList);
-
+    // Icône en fonction de l’extension
     function getFileIcon(name) {
-        const ext = name.split('.').pop().toLowerCase();
-        switch (ext) {
-            case 'pdf':   return 'pdf-icon';
-            case 'doc':   case 'docx': return 'doc-icon';
-            case 'xls':   case 'xlsx': return 'xls-icon';
-            case 'jpg':   case 'jpeg': case 'png': return 'img-icon';
-            case 'mp4':   case 'mov': return 'vid-icon';
-            default:      return '';
-        }
+      const ext = name.split('.').pop().toLowerCase();
+      switch (ext) {
+        case 'pdf':   return 'pdf-icon';
+        case 'doc': case 'docx': return 'doc-icon';
+        case 'xls': case 'xlsx': return 'xls-icon';
+        case 'jpg': case 'jpeg': case 'png': return 'img-icon';
+        case 'mp4': case 'mov':   return 'vid-icon';
+        default:      return '';
+      }
     }
 
+    // Formatage de la taille
     function formatFileSize(bytes) {
-        const units = ['o', 'Ko', 'Mo', 'Go'];
-        let i = 0;
-        while (bytes >= 1024 && i < units.length - 1) {
-            bytes /= 1024;
-            i++;
-        }
-        return `${bytes.toFixed(1)} ${units[i]}`;
+      const units = ['o','Ko','Mo','Go'];
+      let i = 0;
+      while (bytes >= 1024 && i < units.length-1) {
+        bytes /= 1024; i++;
+      }
+      return `${bytes.toFixed(1)} ${units[i]}`;
     }
 
+    // Récupération et affichage de la liste
     async function refreshFileList() {
-        try {
-            const response = await axios.get(filesURL);
-            const data = response.data;
-            fileListContent.innerHTML = '';
+      try {
+        const resp = await axios.get(filesURL);
+        const files = Array.isArray(resp.data) ? resp.data : (resp.data.files || []);
+        fileListContent.innerHTML = '';
 
-            if (!data || data.length === 0) {
-                fileListContent.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-folder-open"></i>
-                        <p>Aucun fichier n'a été téléchargé.</p>
-                    </div>
-                `;
-            } else {
-                data.forEach(file => {
-                    const fileItem = document.createElement('div');
-                    fileItem.classList.add('file-item');
-                    fileItem.innerHTML = `
-                        <div class="file-info">
-                            <div class="file-icon ${getFileIcon(file.name)}">
-                                <i class="fas fa-file-alt"></i>
-                            </div>
-                            <div class="file-details">
-                                <div class="file-name">${file.name}</div>
-                                <div class="file-meta">
-                                    <span>${formatFileSize(file.size)}</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="file-actions">
-                            <a href="${file.url}" class="action-btn download-btn" download="${file.name}">
-                              <i class="fas fa-download"></i>
-                            </a>
-                            <button class="action-btn delete-btn" data-public-id="${file.public_id}">
-                              <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    `;
-                    fileListContent.appendChild(fileItem);
-                });
-
-                document.querySelectorAll('.delete-btn').forEach(btn => {
-                    btn.addEventListener('click', async (e) => {
-                        const publicId = e.currentTarget.getAttribute('data-public-id');
-                        if (!confirm('Voulez-vous vraiment supprimer ce fichier ?')) return;
-                        try {
-                            await axios.delete(`https://sap-project-production.up.railway.app/api/delete/${publicId}`);
-                            refreshFileList();
-                        } catch (err) {
-                            alert('Erreur lors de la suppression.');
-                        }
-                    });
-                });
-            }
-        } catch (error) {
-            console.error('Error fetching file list:', error);
-            fileListContent.innerHTML = `<p>Impossible de charger la liste des fichiers.</p>`;
+        if (!files.length) {
+          fileListContent.innerHTML = `
+            <div class="empty-state">
+              <i class="fas fa-folder-open"></i>
+              <p>Aucun fichier n'a été téléchargé.</p>
+            </div>
+          `;
+          return;
         }
+
+        files.forEach(f => {
+          const div = document.createElement('div');
+          div.className = 'file-item';
+          div.innerHTML = `
+            <div class="file-info">
+              <div class="file-icon ${getFileIcon(f.name)}">
+                <i class="fas fa-file-alt"></i>
+              </div>
+              <div class="file-details">
+                <div class="file-name">${f.name}</div>
+                <div class="file-meta">${f.size ? formatFileSize(f.size) : f.type || ''}</div>
+              </div>
+            </div>
+            <div class="file-actions">
+              <a href="${f.url}" class="action-btn download-btn" download="${f.name}">
+                <i class="fas fa-download"></i>
+              </a>
+              <button class="action-btn delete-btn" data-id="${f.public_id}">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          `;
+          fileListContent.appendChild(div);
+        });
+
+        // Suppression
+        document.querySelectorAll('.delete-btn').forEach(btn => {
+          btn.addEventListener('click', async e => {
+            const id = e.currentTarget.dataset.id;
+            if (!confirm('Supprimer ce fichier ?')) return;
+            try {
+              await axios.delete(`https://sap-project-production.up.railway.app/api/delete/${id}`);
+              refreshFileList();
+            } catch {
+              alert('Erreur lors de la suppression.');
+            }
+          });
+        });
+
+      } catch (err) {
+        console.error(err);
+        fileListContent.innerHTML = '<p>Impossible de charger la liste des fichiers.</p>';
+      }
     }
 
     // Chargement initial
     refreshFileList();
-</script>
-
+  </script>
 </body>
 </html>
