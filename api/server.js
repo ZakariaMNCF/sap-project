@@ -1,45 +1,36 @@
 // api/server.js
-require('dotenv').config();                 // 1️⃣ Load .env
+require('dotenv').config();
 const express = require('express');
-const path = require('path');
-const cors = require('cors');
-const helmet = require('helmet');
+const path    = require('path');
+const cors    = require('cors');
+const helmet  = require('helmet');
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
-const multer = require('multer');
+const multer  = require('multer');
 
 const app = express();
 
-// ─── 2. MIDDLEWARE ──────────────────────────────────────────────────────────────
-
-// Parse JSON and URL-encoded bodies
+// ─── 1. MIDDLEWARE GÉNÉRAL ───────────────────────────────────────────────────────
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// Secure HTTP headers
 app.use(helmet());
 
-// ─── 3. CORS CONFIGURATION ──────────────────────────────────────────────────────
-// Read ALLOWED_ORIGINS from .env, split by commas, trim whitespace, ignore empties
+// ─── 2. CORS ────────────────────────────────────────────────────────────────────
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
   .split(',')
-  .map(origin => origin.trim())
-  .filter(origin => origin.length);
+  .map(o => o.trim())
+  .filter(Boolean);
 
 app.use(cors({
-  origin: (origin, callback) => {
-    // allow non-CORS requests (like from Postman) with no origin
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error(`CORS policy: origin ${origin} not allowed`));
-    }
+  origin: (origin, cb) => {
+    if (!origin || allowedOrigins.includes(origin)) cb(null, true);
+    else cb(new Error(`CORS: origin ${origin} non autorisée`));
   },
-  methods: ['GET', 'POST', 'DELETE'],
+  methods: ['GET','POST','DELETE'],
   credentials: true
 }));
 
-// ─── 4. CLOUDINARY + MULTER SETUP ────────────────────────────────────────────────
+// ─── 3. CONFIGURER CLOUDINARY + MULTER ─────────────────────────────────────────
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key:    process.env.CLOUDINARY_API_KEY,
@@ -55,30 +46,16 @@ const storage = new CloudinaryStorage({
     resource_type:   'auto'
   }
 });
-
 const upload = multer({
   storage,
-  limits: { fileSize: 10 * 1024 * 1024 }  // 10 MB max
+  limits: { fileSize: 10 * 1024 * 1024 } // 10 Mo
 });
 
-// ─── 5. SERVE STATIC FILES ───────────────────────────────────────────────────────
-app.use(express.static(path.join(__dirname, '../public')));
+// ─── 4. ROUTES API ───────────────────────────────────────────────────────────────
 
-// Automatically serve your customer page at “/” and at “/SAP-Customer”
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/SAP-Customer.html'));
-});
-app.get('/SAP-Customer', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/SAP-Customer.html'));
-});
-
-// ─── 6. API ENDPOINTS ────────────────────────────────────────────────────────────
-
-// Upload endpoint
+// 4.1 Upload
 app.post('/api/upload', upload.single('file'), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: 'Aucun fichier reçu' });
-  }
+  if (!req.file) return res.status(400).json({ error: 'Aucun fichier reçu' });
   res.json({
     success:   true,
     filename:  req.file.originalname,
@@ -87,30 +64,28 @@ app.post('/api/upload', upload.single('file'), (req, res) => {
   });
 });
 
-// List files endpoint
+// 4.2 Lister
 app.get('/api/files', async (req, res) => {
   try {
     const result = await cloudinary.api.resources({
       type:   'upload',
       prefix: 'sap-uploads/'
     });
-
-    // Map Cloudinary data to a simpler format
     const files = result.resources.map(f => ({
       name:      f.original_filename || f.public_id,
       url:       f.secure_url,
       public_id: f.public_id,
-      type:      f.resource_type
+      type:      f.resource_type,
+      size:      f.bytes       // taille en octets
     }));
-
     res.json(files);
   } catch (err) {
-    console.error('Error fetching from Cloudinary:', err);
+    console.error('Erreur Cloudinary list:', err);
     res.status(500).json({ error: 'Impossible de récupérer la liste des fichiers' });
   }
 });
 
-// Delete file endpoint
+// 4.3 Supprimer
 app.delete('/api/delete/:public_id', async (req, res) => {
   try {
     const result = await cloudinary.uploader.destroy(req.params.public_id);
@@ -119,25 +94,43 @@ app.delete('/api/delete/:public_id', async (req, res) => {
     }
     res.json({ success: true });
   } catch (err) {
-    console.error('Error deleting from Cloudinary:', err);
+    console.error('Erreur Cloudinary delete:', err);
     res.status(500).json({ error: 'Impossible de supprimer le fichier' });
   }
 });
 
-// ─── 7. 404 + GLOBAL ERROR HANDLERS ─────────────────────────────────────────────
+// ─── 5. ROUTES POUR VOTRE FRONTEND HTML ─────────────────────────────────────────
+
+// Page d’accueil et page client
+app.get(['/', '/SAP-Customer'], (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/SAP-Customer.html'));
+});
+
+// ─── 6. ASSETS STATIQUES ─────────────────────────────────────────────────────────
+// On sert tout ce qui est CSS/JS/fonts/images sous /static/*
+// Vous devrez adapter vos liens HTML : 
+//    <link href="/static/all.min.css">, <script src="/static/axios.min.js">, etc.
+app.use(
+  '/static',
+  express.static(path.join(__dirname, '../public'))
+);
+
+// ─── 7. 404 & ERREUR GLOBALE ─────────────────────────────────────────────────────
 app.use((req, res) => {
   res.status(404).json({ error: 'Route non trouvée' });
 });
+
 app.use((err, req, res, next) => {
-  console.error('Unhandled error:', err.stack);
+  console.error('Unhandled Error:', err.stack);
   res.status(500).json({ error: 'Erreur serveur interne' });
 });
 
-// ─── 8. START THE SERVER ────────────────────────────────────────────────────────
+// ─── 8. LANCEMENT DU SERVEUR ─────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
 if (require.main === module) {
   app.listen(PORT, () =>
-    console.log(`🟢 Server running on http://localhost:${PORT}`));
+    console.log(`Server en écoute sur le port ${PORT}`)
+  );
 }
 
 module.exports = app;
